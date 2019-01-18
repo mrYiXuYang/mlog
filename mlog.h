@@ -22,8 +22,9 @@ namespace MyLog
 	typedef long double ldouble;
 	typedef int logkey;
 
-#define M_FLOAT_SAVE_FLAG 8
-#define M_FLOAT_EQUAL_FLAG 0.0001f
+#define M_FLOAT_SAVE_FLAG 8//the float can save 8 point
+
+#define M_FLOAT_EQUAL_FLAG 0.0001f //float compare 
 
 #define	M_INTNB_STR_TEN(buff,nb) do{char nbf[sizeof(buff)]={0};memset(buff,0,sizeof(buff));\
 llong arg=nb;int begin=0,sz=0; if(arg<0){arg=-arg;buff[0]='-';begin=1;}\
@@ -52,7 +53,7 @@ for(int i=2,j=sz-1;i<sz+2;i++,j--){buff[i]=nbf[j];}}while(0);//inteager number t
 	for(int i=start,j=0;i<start+len-1;i++,j++){buff[i]=nbf2[j];}\
 	}while(0);//float number to the string,buff must be the char[];
 
-#define M_LOG_DEFAULT_LEN (1024*1024)
+#define M_LOG_DEFAULT_LEN (1024*1024) //the defualt logs memory len is 1m
 
 #define M_LOG_START_FLAG_CHAR '#'
 #define M_LOG_END '\0'
@@ -60,27 +61,39 @@ for(int i=2,j=sz-1;i<sz+2;i++,j--){buff[i]=nbf[j];}}while(0);//inteager number t
 #define M_LOG_AFTERKY_CHAR ':'
 #define LENDL '\n'<<'\0'
 
-#define M_LOG_WRITE_FILE 0x01
-#define M_LOG_WRITE_CONSOLE 0x02
+#define M_LOG_WRITE_FILE 0x01 //write to the file
+#define M_LOG_WRITE_CONSOLE 0x02//write to the console
 
 	bool Str_equal_log(const char* str1, const char* str2);
-
+/*
+	atuor:yixuyang 
+	telphone:18225227554
+	becarefor:
+		this logs class can save a log beigain with main_key,the main_key can't have the same for the log
+		this logs can't save this string witch have char '#' '\0' ':'
+		this logs will not save msg when you prep save a the same main_ky log
+*/
 	class Logs
 	{
 	private:
 		bit64 len;
 		bit32 nexptr;
 		char* data;
+		bool saveflag;
 	public:
-		Logs();
-		Logs(bit64 preplen);
-		Logs(const char* logflpath);
+		Logs();//default logs length 1m
+		Logs(bit64 preplen);//preplen logs length
+		Logs(const char* logflpath);//load other logs from file
 		virtual ~Logs();
 
-		Logs& push_back_main_key(logkey key);
+		Logs& push_back_main_key(logkey key);//add main key
+		Logs& push_back_main_key(const char* str);//add main key
+
+
+		//add mesages to the log
 		Logs& push_back(const char* str);
-		Logs& push_back_hexnb(bit64 arg);
-		Logs& push_back_decnb(long long arg);
+		Logs& push_back_hexnb(bit64 arg);//save with hex
+		Logs& push_back_decnb(long long arg);//save with decimal
 		Logs& push_back_floatnb(long double arg);
 		Logs& operator<<(const char* str);
 		Logs& operator<<(char arg);
@@ -97,9 +110,13 @@ for(int i=2,j=sz-1;i<sz+2;i++,j--){buff[i]=nbf[j];}}while(0);//inteager number t
 		Logs& operator<<(double arg);
 		Logs& operator<<(long double arg);
 
+		//write
 		void Write(bit8 where_flag, const char* title);
-
+		//find 
 		char* Find_by_key(logkey key);
+		char* Find_by_key(const char* key);
+
+		//get the log data char ptr
 		char* C_str();
 	};
 }

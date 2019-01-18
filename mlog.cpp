@@ -43,6 +43,7 @@ namespace MyLog
 			nexptr = len1 < 0 ? 0 : len1+2;
 			
 		}
+		saveflag = false;
 
 	}
 
@@ -52,6 +53,7 @@ namespace MyLog
 		data = new char[M_LOG_DEFAULT_LEN];
 		memset(data, 0, M_LOG_DEFAULT_LEN);
 		len = M_LOG_DEFAULT_LEN;
+		saveflag = false;
 	}
 
 	Logs::Logs(bit64 preplen)
@@ -61,6 +63,7 @@ namespace MyLog
 		data = new char[preplen];
 		memset(data, 0, preplen);
 		this->len = preplen;
+		saveflag = false;
 	}
 
 	Logs::~Logs()
@@ -73,6 +76,8 @@ namespace MyLog
 
 	Logs& Logs::push_back(const char*buff)
 	{
+		if (!saveflag)
+			return *this;
 		bit32 len1 = strlen(buff);
 		if (len1 == 0)
 		{
@@ -96,12 +101,20 @@ namespace MyLog
 		return *this;
 	}
 
-	Logs& Logs::push_back_main_key(logkey mainkey)
+	Logs& Logs::push_back_main_key(logkey key)
 	{
-		if (this->Find_by_key(mainkey))
+		char buffs[20];
+		M_INTNB_STR_TEN(buffs, key);
+		return this->push_back_main_key(buffs);
+	}
+
+	Logs& Logs::push_back_main_key(const char* buffs)
+	{
+		if (this->Find_by_key(buffs))
+		{
+			saveflag = false;
 			return *this;
-		char buffs[21] = { 0 };
-		M_INTNB_STR_TEN(buffs, mainkey);
+		}
 		bit32 len1 = strlen(buffs);
 		bit64 temp = this->len;
 		while (nexptr + len1+2 > this->len)
@@ -118,17 +131,23 @@ namespace MyLog
 		memcpy(data + nexptr, buffs, len1);
 		nexptr += len1;
 		data[nexptr++] = M_LOG_AFTERKY_CHAR;
+		saveflag = true;
 		return *this;
 
 	}
 
 	char* Logs::Find_by_key(logkey key)
 	{
-		char buff[21] = {0};
-		char buff1[21] = {0};
+		char buff[20];
 		M_INTNB_STR_TEN(buff, key);
-		// find the '#'
-		if (nexptr == 0)
+		return this->Find_by_key(buff);
+	}
+
+	char* Logs::Find_by_key(const char* buff)
+	{
+
+		char buff1[21] = {0};
+		if (nexptr == 0||strlen(buff)==0)
 			return nullptr;
 		bit32 flag = 0;
 		bit32 i = 0;
@@ -139,7 +158,8 @@ namespace MyLog
 			{
 				i = 0;
 				result = flag;
-				while ((data[flag] >= '0'&&data[flag] <= '9') || data[flag] == '-')
+				memset(buff1, 0, 21);
+				while (data[flag]!=M_LOG_AFTERKY_CHAR)
 				{
 					buff1[i++] = data[flag++];
 				}
